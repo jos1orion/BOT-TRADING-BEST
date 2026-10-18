@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#10151d">
+  <title>Hermes Trading</title>
+  <link rel="stylesheet" href="/style.css?v=20261017-1">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script defer src="/app.js?v=20261017-1"></script>
+</head>
+<body>
+  <main class="shell">
+    <header class="top">
+      <div>
+        <p class="eyebrow">HERMES TRADING</p>
+        <h1>Tableau de bord</h1>
+      </div>
+      <span id="mode" class="pill">Connexion…</span>
+    </header>
+
+    <section id="access-panel" class="panel access-panel">
+      <h2 id="access-title">Accès sécurisé</h2>
+      <p id="access-description" class="muted access-description">Vérification de l’accès…</p>
+      <form id="pin-form" class="access-form" hidden>
+        <label id="pin-label" for="pin-input">Code PIN</label>
+        <input id="pin-input" type="password" inputmode="numeric" pattern="[0-9]{6}"
+               autocomplete="one-time-code" maxlength="6" required>
+        <div id="pin-confirm-wrap" hidden>
+          <label for="pin-confirm">Confirmer le nouveau PIN</label>
+          <input id="pin-confirm" type="password" inputmode="numeric" pattern="[0-9]{6}"
+                 autocomplete="new-password" maxlength="6">
+        </div>
+        <button id="pin-submit" class="secondary-button" type="submit">Continuer</button>
+      </form>
+      <p id="pin-error" class="access-error" role="alert"></p>
+    </section>
+
+    <div id="dashboard" hidden>
+      <div class="section-heading pin-dashboard-actions">
+        <span class="muted">Session protégée par PIN</span>
+        <button id="show-pin-change" class="secondary-button" type="button"
+                aria-expanded="false" aria-controls="pin-change-panel">Modifier le PIN</button>
+      </div>
+      <section id="pin-change-panel" class="panel" hidden>
+        <form id="pin-change-form" class="access-form">
+          <h2>Changer le PIN</h2>
+          <label for="pin-current">PIN actuel</label>
+          <input id="pin-current" type="password" inputmode="numeric" pattern="[0-9]{6}"
+                 autocomplete="current-password" maxlength="6" required>
+          <label for="pin-new">Nouveau PIN</label>
+          <input id="pin-new" type="password" inputmode="numeric" pattern="[0-9]{6}"
+                 autocomplete="new-password" maxlength="6" required>
+          <label for="pin-new-confirm">Confirmer le nouveau PIN</label>
+          <input id="pin-new-confirm" type="password" inputmode="numeric" pattern="[0-9]{6}"
+                 autocomplete="new-password" maxlength="6" required>
+          <button class="secondary-button" type="submit">Enregistrer le nouveau PIN</button>
+        </form>
+        <p id="pin-change-error" class="access-error" role="alert"></p>
+      </section>
+      <p id="message" class="message" role="status">Chargement des données…</p>
+
+      <section class="metrics account-metrics" aria-label="Compte">
+      <article class="metric"><span>Équité</span><strong id="equity">—</strong></article>
+      <article class="metric"><span>Solde</span><strong id="balance">—</strong></article>
+      <article class="metric"><span>Résultat flottant</span><strong id="floating">—</strong></article>
+      <article class="metric"><span>Résultat du jour</span><strong id="today-pnl">—</strong></article>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <h2>Performance cumulée</h2>
+        <div class="periods" aria-label="Période du graphique">
+          <button class="period active" data-period="7">7 j</button>
+          <button class="period" data-period="30">30 j</button>
+          <button class="period" data-period="all">Tout</button>
+        </div>
+      </div>
+      <div id="performance-chart" class="chart" role="img" aria-label="Graphique du résultat cumulé"></div>
+      <p id="chart-summary" class="muted chart-summary">En attente des trades clôturés.</p>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <h2>Positions ouvertes</h2>
+        <span id="position-count" class="count">0</span>
+      </div>
+      <div id="positions" class="list"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading"><h2>Risque et protection</h2></div>
+      <div class="risk-grid">
+        <article class="risk-item"><span>Drawdown maximum</span><strong id="drawdown">—</strong></article>
+        <article class="risk-item"><span>Pertes consécutives</span><strong id="loss-streak">—</strong></article>
+        <article class="risk-item"><span>Limites jour / semaine</span><strong id="risk-limits">—</strong></article>
+        <article class="risk-item"><span>Risque par trade</span><strong id="risk-per-trade">—</strong></article>
+      </div>
+      <div class="risk-usage">
+        <div class="risk-usage-row">
+          <div class="risk-usage-label"><span>Limite journalière utilisée</span><strong id="daily-usage-label">—</strong></div>
+          <div class="progress-track"><div id="daily-usage-bar" class="progress-fill"></div></div>
+        </div>
+        <div class="risk-usage-row">
+          <div class="risk-usage-label"><span>Limite hebdomadaire utilisée</span><strong id="weekly-usage-label">—</strong></div>
+          <div class="progress-track"><div id="weekly-usage-bar" class="progress-fill"></div></div>
+        </div>
+      </div>
+      <p id="risk-alert" class="risk-alert" hidden></p>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading"><h2>État des connexions</h2></div>
+      <div class="connection-grid">
+        <div class="connection-item"><span>Bot</span><strong id="bot-status">—</strong></div>
+        <div class="connection-item"><span>MT5</span><strong id="mt5-status">—</strong></div>
+        <div class="connection-item"><span>Mini App / tunnel</span><strong id="api-status">—</strong></div>
+      </div>
+    </section>
+
+    <section class="metrics compact performance-metrics" aria-label="Performance">
+      <article class="metric"><span>Trades clôturés</span><strong id="trades">—</strong></article>
+      <article class="metric"><span>Réussite</span><strong id="win-rate">—</strong></article>
+      <article class="metric"><span>Gain net</span><strong id="net-pnl">—</strong></article>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading">
+        <h2>Derniers trades</h2>
+        <button id="export-trades" class="secondary-button" type="button">Exporter CSV</button>
+      </div>
+      <div class="history-filters">
+        <label class="search-label" for="trade-search">Recherche symbole
+          <input id="trade-search" type="search" placeholder="Ex. EURUSD" autocomplete="off">
+        </label>
+        <label for="trade-period">Période
+          <select id="trade-period">
+            <option value="7">7 jours</option>
+            <option value="30">30 jours</option>
+            <option value="90">90 jours</option>
+            <option value="all">Tout l’historique chargé</option>
+          </select>
+        </label>
+        <label for="trade-outcome">Résultat
+          <select id="trade-outcome">
+            <option value="all">Tous</option>
+            <option value="wins">Gains</option>
+            <option value="losses">Pertes</option>
+          </select>
+        </label>
+        <label for="trade-symbol">Symbole
+          <select id="trade-symbol"><option value="all">Tous</option></select>
+        </label>
+      </div>
+      <p id="history-count" class="muted history-count">En attente des trades.</p>
+      <div id="history" class="list"></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading"><h2>Journal d’activité</h2></div>
+      <div id="activity" class="activity-list"></div>
+    </section>
+
+      <footer>
+        <span id="updated">Mis à jour —</span>
+        <span id="freshness">Actualisation automatique · 15 s</span>
+      </footer>
+    </div>
+  </main>
+</body>
+</html>

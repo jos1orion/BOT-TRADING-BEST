@@ -1,0 +1,29 @@
+yfinance>=0.2.36
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Notifications Telegram + calendrier économique (téléchargement du flux)
+requests>=2.31.0
+
+# Export du journal de trading au format Excel (.xlsx)
+# Sans ce package, le journal reste disponible en CSV et un résumé CSV
+# est produit à la place lors de l'export Excel.
+openpyxl>=3.1.0
+
+# Chargement des secrets depuis un fichier .env (optionnel mais recommandé)
+python-dotenv>=1.0.0
+
+# Trading live MetaTrader 5 (Windows uniquement) — optionnel
+# MetaTrader5>=5.0.45
+
+# ── BingX (crypto) ──────────────────────────────────────────────
+# requests>=2.31.0 (déjà listé ci-dessus, utilisé aussi pour BingX)
+
+# ── Sniping / wallet tracking Solana ────────────────────────────
+websockets>=12.0
+solders>=0.21.0
+base58>=2.1.1
+# solana>=0.34.0        # utile si tu décodes les comptes/tx en direct
+
+# ── Bot Telegram de contrôle complet ─────────────────────────────
+python-telegram-bot>=21.0

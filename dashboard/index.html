@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hermes Trading Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-robot"></i>
+            <span>Hermes Trading</span>
+        </div>
+        <div class="nav-controls">
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot connected"></span>
+                <span>Connecté</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="dashboard">
+        <!-- Header Stats -->
+        <section class="stats-header">
+            <div class="stat-card primary">
+                <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Portefeuille</div>
+                    <div class="stat-value" id="portfolioValue">€10,000.00</div>
+                    <div class="stat-change positive" id="portfolioChange">+2.5%</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-arrow-trend-up"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Trades Aujourd'hui</div>
+                    <div class="stat-value" id="todayTrades">12</div>
+                    <div class="stat-change negative" id="winRate">67%</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Performance</div>
+                    <div class="stat-value" id="performance">15.3%</div>
+                    <div class="stat-change positive">+8.2%</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+                <div class="stat-content">
+                    <div class="stat-label">Drawdown Max</div>
+                    <div class="stat-value" id="maxDrawdown">-2.1%</div>
+                    <div class="stat-change negative">↔ Stable</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Grid -->
+        <section class="dashboard-grid">
+            <!-- Equity Curve Chart -->
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-line"></i> Courbe de Performance</h3>
+                    <div class="time-filters">
+                        <button class="time-btn active" data-period="1D">1J</button>
+                        <button class="time-btn" data-period="1W">1S</button>
+                        <button class="time-btn" data-period="1M">1M</button>
+                        <button class="time-btn" data-period="3M">3M</button>
+                        <button class="time-btn" data-period="1Y">1A</button>
+                    </div>
+                </div>
+                <canvas id="equityChart"></canvas>
+            </div>
+
+            <!-- Open Positions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-briefcase"></i> PositionsOuvertes</h3>
+                    <span class="badge" id="openPositionsCount">3</span>
+                </div>
+                <div class="positions-list" id="positionsList">
+                    <!-- Positions will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Recent Trades -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-history"></i> Trades Récents</h3>
+                    <a href="#" class="view-all">Voir tout</a>
+                </div>
+                <div class="trades-list" id="tradesList">
+                    <!-- Trades will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Market Watch -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-globe"></i> Veille Marché</h3>
+                </div>
+                <div class="market-watch" id="marketWatch">
+                    <!-- Market data will be populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Strategy Performance -->
+            <div class="card chart-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chess-knight"></i> Performance par Stratégie</h3>
+                </div>
+                <canvas id="strategyChart"></canvas>
+            </div>
+
+            <!-- Risk Metrics -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-shield-alt"></i> Métriques de Risque</h3>
+                </div>
+                <div class="risk-metrics" id="riskMetrics">
+                    <!-- Risk metrics will be populated dynamically -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+        <div class="footer-content">
+            <div class="last-update">Dernière actualisation: <span id="lastUpdate">Jamais</span></div>
+            <div class="version">Hermes Dashboard v2.0</div>
+        </div>
+    </footer>
+
+    <script src="js/dashboard.js"></script>
+</body>
+</html>

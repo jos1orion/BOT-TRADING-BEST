@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.log
+.dashboard_key
+.telegram_miniapp_pin.json
+dashboard_live_*.json
+drawdown_state_*.json
+drawdown_state_*.json.tmp

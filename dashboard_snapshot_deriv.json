@@ -1,0 +1,17 @@
+{
+  "id": "snap_bot_mt5_—_deriv",
+  "name": "Bot MT5 — DERIV",
+  "market": "EURUSD, GBPUSD, USDJPY, USDCHF, AUDUSD, USDCAD, GBPJPY, EURJPY, XAUUSD, XAGUSD, USOIL, UKOIL, DE40, UK100, US500, US100, BTCUSD, ETHUSD, V10, V25, V50, V75, V100, V75_1S, V100_1S, BOOM1000, CRASH1000, BOOM500, CRASH500, STEP, JUMP25, JUMP75",
+  "period": "depuis 2026-10-17",
+  "trades": 14,
+  "capital": 9989.3,
+  "profit": -128.24,
+  "dd": 2.52,
+  "winrate": 42.9,
+  "pf": 0.65,
+  "sharpe": -0.62,
+  "recovery": -0.51,
+  "notes": "",
+  "createdAt": 1792196644063,
+  "updatedAt": "2026-10-17 02:24:04"
+}
