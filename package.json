@@ -1,0 +1,7 @@
+{
+  "name": "hermes-telegram-miniapp",
+  "private": true,
+  "scripts": {
+    "build": "node -e \"require('fs').cpSync('telegram_miniapp', 'dist', { recursive: true })\""
+  }
+}

@@ -7,6 +7,7 @@ dashboard_live_*.json
 drawdown_state_*.json
 drawdown_state_*.json.tmp
 miniapp_commands_*.jsonl
+dist/
 backtest_report_*.html
 backtest_trades_*.csv
 dashboard_live_*.html
