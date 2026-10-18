@@ -35,6 +35,11 @@ def main():
         type=int,
         default=int(os.environ.get("TELEGRAM_MINIAPP_PORT", "8766")),
     )
+    parser.add_argument(
+        "--allowed-origin",
+        default=os.environ.get("TELEGRAM_MINIAPP_ORIGIN", ""),
+        help="Vercel origin allowed to call this API, e.g. https://my-app.vercel.app.",
+    )
     args = parser.parse_args()
 
     token = str(TELEGRAM_CONFIG.get("bot_token") or "")
@@ -64,6 +69,7 @@ def main():
     static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                               "telegram_miniapp")
     pin_file = os.path.abspath(".telegram_miniapp_pin.json")
+    command_file = os.path.abspath(f"miniapp_commands_{args.broker.lower()}.jsonl")
     webapp_url = str(TELEGRAM_CONFIG.get("webapp_url") or "").strip()
     if webapp_url:
         parsed_url = urlsplit(webapp_url)
@@ -78,7 +84,7 @@ def main():
                 )
     handler = make_miniapp_handler(
         static_dir, state_file, token, ",".join(sorted(allowed_ids)),
-        journal_file, pin_file,
+        journal_file, pin_file, command_file, args.allowed_origin,
     )
     server = ThreadingHTTPServer((args.host, args.port), handler)
     server.daemon_threads = True

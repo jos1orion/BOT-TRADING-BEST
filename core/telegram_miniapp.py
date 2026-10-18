@@ -16,6 +16,8 @@ import time
 from http.server import BaseHTTPRequestHandler
 from urllib.parse import parse_qsl, urlsplit
 
+from core.miniapp_commands import enqueue
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +74,8 @@ def verify_telegram_init_data(init_data: str, bot_token: str,
 
 def make_miniapp_handler(static_dir: str, state_file: str,
                          bot_token: str, allowed_user_ids: str,
-                         journal_file: str = "", pin_file: str = ""):
+                         journal_file: str = "", pin_file: str = "",
+                         command_file: str = "", allowed_origin: str = ""):
     pin_path = pin_file or os.path.join(os.path.dirname(state_file), ".telegram_miniapp_pin.json")
     failed_pin_attempts = {}
     attempt_lock = threading.Lock()
@@ -98,8 +101,25 @@ def make_miniapp_handler(static_dir: str, state_file: str,
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("Referrer-Policy", "no-referrer")
+            origin = self.headers.get("Origin", "").rstrip("/")
+            if allowed_origin and origin == allowed_origin.rstrip("/"):
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Vary", "Origin")
             self.end_headers()
             self.wfile.write(body)
+
+        def do_OPTIONS(self):
+            origin = self.headers.get("Origin", "").rstrip("/")
+            if not allowed_origin or origin != allowed_origin.rstrip("/"):
+                self._respond(403, b'{"error":"Origin not allowed"}')
+                return
+            self.send_response(204)
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Authorization, Content-Type, X-MiniApp-PIN")
+            self.send_header("Access-Control-Max-Age", "600")
+            self.send_header("Vary", "Origin")
+            self.end_headers()
 
         def _authorized_user(self):
             authorization = self.headers.get("Authorization", "")
@@ -243,7 +263,11 @@ def make_miniapp_handler(static_dir: str, state_file: str,
             self._respond(200, body, content_type)
 
         def do_POST(self):
-            if urlsplit(self.path).path != "/api/pin/setup":
+            path = urlsplit(self.path).path
+            if path == "/api/control":
+                self._control()
+                return
+            if path != "/api/pin/setup":
                 self._respond(404, b"Not found", "text/plain; charset=utf-8")
                 return
             user_id = self._authorized_user()
@@ -282,6 +306,41 @@ def make_miniapp_handler(static_dir: str, state_file: str,
                 return
             body = json.dumps({"configured": True}).encode("utf-8")
             self._respond(200, body)
+
+        def _control(self):
+            user_id = self._authorized_user()
+            if user_id is None:
+                return
+            record = self._read_pin_record()
+            if record is False:
+                return
+            if record is None:
+                self._respond(428, b'{"error":"PIN setup required"}')
+                return
+            supplied_pin = self.headers.get("X-MiniApp-PIN", "")
+            if not re.fullmatch(r"\d{6}", supplied_pin) or not self._pin_is_valid(user_id, record, supplied_pin):
+                if re.fullmatch(r"\d{6}", supplied_pin):
+                    return
+                self._respond(403, b'{"error":"PIN required"}')
+                return
+            try:
+                length = int(self.headers.get("Content-Length", "0"))
+                payload = json.loads(self.rfile.read(length))
+                action = payload.get("action") if isinstance(payload, dict) else None
+            except (ValueError, UnicodeError, json.JSONDecodeError):
+                action = None
+            if action not in {"pause", "resume"}:
+                self._respond(400, b'{"error":"Unsupported control action"}')
+                return
+            if not command_file:
+                self._respond(503, b'{"error":"Control channel is not configured"}')
+                return
+            try:
+                enqueue(command_file, action, user_id)
+            except OSError:
+                self._respond(503, b'{"error":"Control command could not be queued"}')
+                return
+            self._respond(202, json.dumps({"queued": action}).encode("utf-8"))
 
         def _send_state(self):
             user_id = self._authorized_user()

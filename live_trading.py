@@ -28,6 +28,7 @@ from core.brokers.deriv_config import (
 )
 from core.config import Config
 from core.live_dashboard import write_live_dashboard, write_live_dashboard_state
+from core.miniapp_commands import drain as drain_miniapp_commands
 from core.telegram_commander import TelegramCommander
 from core.bot_commands import BotCommands
 from core.data import DataFetcher
@@ -687,6 +688,28 @@ class LiveTradingBot:
             guard_status = ("⏸ REPOS demandé via Telegram — " if self.user_paused else "") + self.drawdown_guard.status
             symbols = list(self.symbol_map.values())
             activity = list(self.activity)
+            chart_symbol = symbols[0] if symbols else ""
+            candles = []
+            if chart_symbol:
+                frame = self.mt5.get_ohlcv_mt5(chart_symbol, "H1", count=90)
+                if frame is not None:
+                    candles = [
+                        {"time": index.isoformat(), "open": float(row["Open"]),
+                         "high": float(row["High"]), "low": float(row["Low"]),
+                         "close": float(row["Close"])}
+                        for index, row in frame.tail(90).iterrows()
+                    ]
+            markers = []
+            for position in positions:
+                if position.symbol != chart_symbol:
+                    continue
+                markers.extend([
+                    {"label": "Entrée", "price": float(position.open_price)},
+                    {"label": "SL", "price": float(position.stop_loss)},
+                    {"label": "TP", "price": float(position.take_profit)},
+                ])
+            market_chart = {"symbol": chart_symbol, "timeframe": "H1", "candles": candles,
+                            "markers": markers}
             info = {
                     'started': self._session_start.strftime('%d/%m/%Y %H:%M'),
                     'last_cycle': self._last_cycle.strftime('%H:%M:%S') if self._last_cycle else '—',
@@ -748,6 +771,7 @@ class LiveTradingBot:
                     'bot': True,
                     'mt5': account.get('equity') is not None,
                 },
+                market_chart=market_chart,
             )
             return path
         except Exception as e:
@@ -758,6 +782,7 @@ class LiveTradingBot:
         """Attend `seconds` en traitant les commandes Telegram chaque seconde."""
         end = time.time() + seconds
         while time.time() < end and not self._stop_requested and not self._cycle_now:
+            self._drain_miniapp_commands()
             for command in self.commander.drain():
                 reply = self.commands.handle(command.text)
                 self.commander.reply(
@@ -768,6 +793,21 @@ class LiveTradingBot:
                 self._update_dashboard()
             time.sleep(1)
         self._cycle_now = False
+
+    def _drain_miniapp_commands(self):
+        """Apply Mini App requests in the MT5-owning main thread only."""
+        path = f"miniapp_commands_{self.broker.lower()}.jsonl"
+        requests = drain_miniapp_commands(path)
+        for request in requests:
+            action = request.get("action")
+            if action == "pause":
+                self.commands.handle("/pause")
+                self._log("Mini App : bot mis en repos")
+            elif action == "resume":
+                self.commands.handle("/reprise")
+                self._log("Mini App : trading repris")
+        if requests:
+            self._update_dashboard()
 
     def _check_connection(self):
         """Alerte Telegram si MT5 devient illisible (MT5 fermé, déconnecté…) puis quand ça revient."""
@@ -927,6 +967,7 @@ class LiveTradingBot:
 
         try:
             while not self._stop_requested:
+                self._drain_miniapp_commands()
                 try:
                     self._trading_cycle()
                 except Exception as e:

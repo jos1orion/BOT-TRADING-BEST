@@ -6,3 +6,11 @@ __pycache__/
 dashboard_live_*.json
 drawdown_state_*.json
 drawdown_state_*.json.tmp
+miniapp_commands_*.jsonl
+backtest_report_*.html
+backtest_trades_*.csv
+dashboard_live_*.html
+dashboard_snapshot_*.json
+hermes-trades-filtres.csv
+trading_journal_live_*.csv
+trading_journal_live_*.xlsx

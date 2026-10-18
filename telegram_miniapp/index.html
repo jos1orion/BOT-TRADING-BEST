@@ -7,6 +7,7 @@
   <title>Hermes Trading</title>
   <link rel="stylesheet" href="/style.css?v=20261017-1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="/config.js"></script>
   <script defer src="/app.js?v=20261017-1"></script>
 </head>
 <body>
@@ -59,12 +60,27 @@
         <p id="pin-change-error" class="access-error" role="alert"></p>
       </section>
       <p id="message" class="message" role="status">Chargement des données…</p>
+      <section class="panel" aria-label="Contrôles du bot">
+        <div class="section-heading"><h2>Contrôles</h2></div>
+        <p class="muted">La pause bloque les nouveaux trades ; les positions ouvertes gardent leur SL/TP.</p>
+        <div class="periods">
+          <button id="pause-bot" class="secondary-button" type="button">Mettre en pause</button>
+          <button id="resume-bot" class="secondary-button" type="button">Reprendre</button>
+        </div>
+        <p id="control-message" class="message" role="status"></p>
+      </section>
 
       <section class="metrics account-metrics" aria-label="Compte">
       <article class="metric"><span>Équité</span><strong id="equity">—</strong></article>
       <article class="metric"><span>Solde</span><strong id="balance">—</strong></article>
       <article class="metric"><span>Résultat flottant</span><strong id="floating">—</strong></article>
       <article class="metric"><span>Résultat du jour</span><strong id="today-pnl">—</strong></article>
+    </section>
+
+    <section class="panel">
+      <div class="section-heading"><h2>Marché en direct</h2><span id="candle-label" class="count">—</span></div>
+      <div id="candlestick-chart" class="candlestick-chart" role="img" aria-label="Graphique en chandeliers"></div>
+      <p id="candle-summary" class="muted chart-summary">En attente des données MT5.</p>
     </section>
 
     <section class="panel">

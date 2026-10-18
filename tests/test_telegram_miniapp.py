@@ -103,7 +103,7 @@ class TelegramMiniAppHttpTests(unittest.TestCase):
             output.write(
                 "status,exit_date,entry_date,ticker,strategy,direction,"
                 "entry_price,exit_price,exit_reason,pnl\n"
-                "CLOSED,2026-10-16,2026-10-16,EURUSD,Test,LONG,1.1,1.2,TP,8\n"
+                f"CLOSED,{time.strftime('%Y-%m-%d')},{time.strftime('%Y-%m-%d')},EURUSD,Test,LONG,1.1,1.2,TP,8\n"
             )
 
         handler = make_miniapp_handler(

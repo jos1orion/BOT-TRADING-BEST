@@ -1,12 +1,17 @@
 (() => {
   const telegram = window.Telegram && window.Telegram.WebApp;
   const localPreview = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const apiBase = String(window.HERMES_API_BASE || "").replace(/\/$/, "");
   const message = document.getElementById("message");
   let latestState = null;
   let selectedPeriod = "7";
   let visibleTrades = [];
   let accessPin = "";
   let pinConfigured = false;
+
+  function api(path) {
+    return `${apiBase}${path}`;
+  }
 
   function telegramHeaders() {
     const headers = {};
@@ -52,7 +57,7 @@
 
   async function checkPinStatus() {
     try {
-      const response = await fetch("/api/pin/status", {
+      const response = await fetch(api("/api/pin/status"), {
         cache: "no-store",
         headers: telegramHeaders()
       });
@@ -310,6 +315,62 @@
     summary.className = `muted chart-summary ${total >= 0 ? "positive" : "negative"}`;
   }
 
+  function renderCandles(chart) {
+    const container = document.getElementById("candlestick-chart");
+    const label = document.getElementById("candle-label");
+    const summary = document.getElementById("candle-summary");
+    const candles = Array.isArray(chart?.candles) ? chart.candles : [];
+    container.replaceChildren();
+    label.textContent = chart?.symbol ? `${chart.symbol} · ${chart.timeframe || "H1"}` : "—";
+    if (!candles.length) {
+      container.append(element("p", "empty", "Les bougies MT5 ne sont pas encore disponibles."));
+      summary.textContent = "Démarre le bot avec MT5 connecté pour charger le prix réel.";
+      return;
+    }
+    const width = 680, height = 260, left = 8, right = 58, top = 10, bottom = 24;
+    const low = Math.min(...candles.map((c) => Number(c.low)));
+    const high = Math.max(...candles.map((c) => Number(c.high)));
+    const span = high - low || Math.max(Math.abs(high) * 0.01, 1);
+    const y = (value) => top + (high - value) / span * (height - top - bottom);
+    const step = (width - left - right) / candles.length;
+    const bodyWidth = Math.max(1, step * 0.65);
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.setAttribute("aria-label", `Chandeliers ${chart.symbol} ${chart.timeframe}`);
+    [0, .25, .5, .75, 1].forEach((ratio) => {
+      const price = high - span * ratio;
+      const line = document.createElementNS(svg.namespaceURI, "line");
+      line.setAttribute("x1", left); line.setAttribute("x2", width - right);
+      line.setAttribute("y1", y(price)); line.setAttribute("y2", y(price)); line.setAttribute("class", "candle-grid");
+      svg.append(line);
+      const text = document.createElementNS(svg.namespaceURI, "text");
+      text.setAttribute("x", width - right + 6); text.setAttribute("y", y(price) + 3);
+      text.setAttribute("class", "candle-price"); text.textContent = price.toPrecision(6); svg.append(text);
+    });
+    candles.forEach((candle, index) => {
+      const x = left + step * (index + .5), open = Number(candle.open), close = Number(candle.close);
+      const cls = close >= open ? "candle-up" : "candle-down";
+      const wick = document.createElementNS(svg.namespaceURI, "line");
+      wick.setAttribute("x1", x); wick.setAttribute("x2", x); wick.setAttribute("y1", y(Number(candle.high))); wick.setAttribute("y2", y(Number(candle.low))); wick.setAttribute("class", "candle-wick"); svg.append(wick);
+      const rect = document.createElementNS(svg.namespaceURI, "rect");
+      rect.setAttribute("x", x - bodyWidth / 2); rect.setAttribute("y", y(Math.max(open, close)));
+      rect.setAttribute("width", bodyWidth); rect.setAttribute("height", Math.max(1, Math.abs(y(open) - y(close)))); rect.setAttribute("class", cls);
+      rect.setAttribute("data-tooltip", `${candle.time}\nO ${open} · H ${candle.high} · B ${candle.low} · C ${close}`); svg.append(rect);
+    });
+    (chart.markers || []).forEach((marker) => {
+      const price = Number(marker.price);
+      if (!Number.isFinite(price) || price < low || price > high) return;
+      const line = document.createElementNS(svg.namespaceURI, "line");
+      line.setAttribute("x1", left); line.setAttribute("x2", width - right); line.setAttribute("y1", y(price)); line.setAttribute("y2", y(price));
+      line.setAttribute("stroke", marker.label === "SL" ? "#ff777e" : "#f5c66a"); line.setAttribute("stroke-dasharray", "4 3"); svg.append(line);
+      const text = document.createElementNS(svg.namespaceURI, "text");
+      text.setAttribute("x", left + 4); text.setAttribute("y", y(price) - 4); text.setAttribute("class", "candle-price"); text.textContent = `${marker.label} ${price}`; svg.append(text);
+    });
+    container.append(svg);
+    const last = candles[candles.length - 1];
+    summary.textContent = `Dernière bougie : ${last.time} · clôture ${Number(last.close).toPrecision(7)} · source MT5/Deriv.`;
+  }
+
   function updateFreshness() {
     if (!latestState) return;
     const updatedAt = Date.parse(latestState.updated_at);
@@ -392,6 +453,7 @@
     renderList("positions", state.positions, renderPosition,
       "Aucune position ouverte.", currency);
     renderChart(state.closed_trades || [], currency);
+    renderCandles(state.market_chart);
     populateSymbolFilter(state.closed_trades || []);
     renderHistory();
     renderList("activity", state.activity || [], (item) => element("p", "activity-item", item),
@@ -404,7 +466,7 @@
     try {
       const headers = telegramHeaders();
       headers["X-MiniApp-PIN"] = accessPin;
-      const response = await fetch("/api/state", {
+      const response = await fetch(api("/api/state"), {
         cache: "no-store",
         headers
       });
@@ -460,6 +522,35 @@
   });
   document.getElementById("export-trades").addEventListener("click", exportVisibleTrades);
 
+  async function control(action) {
+    const output = document.getElementById("control-message");
+    if (!accessPin) {
+      output.textContent = "Déverrouille d’abord la Mini App avec ton PIN.";
+      return;
+    }
+    const button = document.getElementById(`${action}-bot`);
+    button.disabled = true;
+    try {
+      const response = await fetch(api("/api/control"), {
+        method: "POST",
+        cache: "no-store",
+        headers: { ...telegramHeaders(), "Content-Type": "application/json", "X-MiniApp-PIN": accessPin },
+        body: JSON.stringify({ action })
+      });
+      if (!response.ok) throw new Error(await responseError(response));
+      output.textContent = action === "pause"
+        ? "Pause demandée : le bot l’appliquera au plus tard dans une seconde."
+        : "Reprise demandée : le bot l’appliquera au plus tard dans une seconde.";
+      window.setTimeout(refresh, 1200);
+    } catch (error) {
+      output.textContent = error.message || "Commande impossible.";
+    } finally {
+      button.disabled = false;
+    }
+  }
+  document.getElementById("pause-bot").addEventListener("click", () => control("pause"));
+  document.getElementById("resume-bot").addEventListener("click", () => control("resume"));
+
   if ((!telegram || !telegram.initData) && !localPreview) {
     document.getElementById("pin-error").textContent =
       "Ouvre cette page depuis le bouton Tableau de bord dans Telegram.";
@@ -483,7 +574,7 @@
         return;
       }
       try {
-        const response = await fetch("/api/pin/setup", {
+        const response = await fetch(api("/api/pin/setup"), {
           method: "POST",
           cache: "no-store",
           headers: {
@@ -535,7 +626,7 @@
       return;
     }
     try {
-      const response = await fetch("/api/pin/setup", {
+      const response = await fetch(api("/api/pin/setup"), {
         method: "POST",
         cache: "no-store",
         headers: {

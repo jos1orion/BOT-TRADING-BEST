@@ -108,6 +108,13 @@ h2 { margin: 0; font-size: 15px; }
 .period.active { border-color: #6f93ff; background: #243452; color: #fff; }
 .chart { min-height: 120px; }
 .chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.candlestick-chart { min-height: 230px; }
+.candlestick-chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.candle-grid { stroke: #2b3949; stroke-width: 1; }
+.candle-wick { stroke: #aab6c6; stroke-width: 1; }
+.candle-up { fill: #47d49a; stroke: #47d49a; }
+.candle-down { fill: #ff777e; stroke: #ff777e; }
+.candle-price { fill: #aab6c6; font-size: 10px; }
 .chart-zero { stroke: #344153; stroke-dasharray: 4 5; }
 .chart-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .positive-line { stroke: #47d49a; }

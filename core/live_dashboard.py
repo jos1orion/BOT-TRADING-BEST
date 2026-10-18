@@ -226,7 +226,8 @@ def write_live_dashboard_state(path: str, broker: str, mode: str, account: Dict,
                                guard_status: str, symbols: List[str],
                                activity: List[str] = None,
                                info: Dict = None,
-                               connections: Dict = None) -> str:
+                               connections: Dict = None,
+                               market_chart: Dict = None) -> str:
     """Écrit les seules données de suivi nécessaires à la Mini App Telegram."""
     def number(value):
         try:
@@ -299,6 +300,7 @@ def write_live_dashboard_state(path: str, broker: str, mode: str, account: Dict,
                 "mt5", account.get("equity") is not None
             )),
         },
+        "market_chart": market_chart or {},
     }
 
     directory = os.path.dirname(os.path.abspath(path)) or "."
