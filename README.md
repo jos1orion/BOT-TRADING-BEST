@@ -564,4 +564,5 @@ Avec `TELEGRAM_ENABLED=true`, `TELEGRAM_BOT_TOKEN` et `TELEGRAM_CHAT_ID` dans le
 Seul votre chat privé est autorisé. Les anciens messages en attente au démarrage sont ignorés.
 Ne lancez pas `telegram_control_bot.py` en même temps avec le même bot Telegram.
 #   B O T - T R A D I N G - B E S T  
+ #   B O T - T R A D I N G - B E S T  
  
