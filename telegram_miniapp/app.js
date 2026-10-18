@@ -1,7 +1,8 @@
 (() => {
   const telegram = window.Telegram && window.Telegram.WebApp;
   const localPreview = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-  const apiBase = String(window.HERMES_API_BASE || "").replace(/\/$/, "");
+  const apiFromLink = new URLSearchParams(window.location.search).get("api") || "";
+  const apiBase = String(apiFromLink || window.HERMES_API_BASE || "").replace(/\/$/, "");
   const message = document.getElementById("message");
   let latestState = null;
   let selectedPeriod = "7";
